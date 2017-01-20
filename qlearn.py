@@ -60,13 +60,13 @@ class Catch(object):
 
         # if player_x == target_x and player_y == target_y:
         #     return 1
-        # elif self._try < 200:
+        # elif self._try < 100:
         #     return -1
         # else:
         #     return 0
 
     def _is_over(self):
-        if self._try >= 200:
+        if self._try >= 100:
             return True
 
         if abs(self.state[0, 0]-self.state[0, 2]) <= 1 and abs(self.state[0, 1] - self.state[0, 3]) <= 1:
@@ -84,7 +84,7 @@ class Catch(object):
         reward = self._get_reward()
         game_over = self._is_over()
 
-        if game_over and self._try < 200:
+        if game_over and self._try < 100:
             reward = 1
         # print(reward)
         return self.observe(), reward, game_over
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     epsilon = .1  # exploration
     num_actions = 5  # [move_left, move_right, move_up, move_down, stay]
     epoch = 1000
-    max_memory = 500
+    max_memory = 1500
     hidden_size = 100
     batch_size = 50
     grid_size = 10
@@ -146,10 +146,10 @@ if __name__ == "__main__":
     model.add(Dense(hidden_size, input_shape=(grid_size**2,), activation='relu'))
     model.add(Dense(hidden_size, activation='relu'))
     model.add(Dense(num_actions))
-    model.compile(sgd(lr=.1), "mse")
+    model.compile(sgd(lr=.5), "mse")
 
     # If you want to continue training from a previous model, just uncomment the line bellow
-    # model.load_weights("model.h5")
+    model.load_weights("model.h5")
 
     # Define environment/game
     env = Catch(grid_size)
