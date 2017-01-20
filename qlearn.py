@@ -69,7 +69,7 @@ class Catch(object):
         if self._try >= 200:
             return True
 
-        if self.state[0, 0] == self.state[0, 2] and self.state[0, 1] == self.state[0, 3]:
+        if abs(self.state[0, 0]-self.state[0, 2]) <= 1 and abs(self.state[0, 1] - self.state[0, 3]) <= 1:
             return True
 
         return False
