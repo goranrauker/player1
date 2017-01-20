@@ -58,15 +58,8 @@ class Catch(object):
 
         return -D/200**0.5
 
-        # if player_x == target_x and player_y == target_y:
-        #     return 1
-        # elif self._try < 100:
-        #     return -1
-        # else:
-        #     return 0
-
     def _is_over(self):
-        if self._try >= 100:
+        if self._try >= self._max_try:
             return True
 
         if abs(self.state[0, 0]-self.state[0, 2]) <= 1 and abs(self.state[0, 1] - self.state[0, 3]) <= 1:
@@ -84,16 +77,20 @@ class Catch(object):
         reward = self._get_reward()
         game_over = self._is_over()
 
-        if game_over and self._try < 100:
+        if game_over and self._try < self._max_try:
             reward = 1
         # print(reward)
         return self.observe(), reward, game_over
 
     def reset(self):
+
         self._try = 0
+        self._max_try = grid_size**2
+        q = np.random.randint(0, self.grid_size-1, size=1)
+        r = np.random.randint(0, self.grid_size-1, size=1)
         n = np.random.randint(0, self.grid_size-1, size=1)
-        m = np.random.randint(1, self.grid_size-2, size=1)
-        self.state = np.asarray([0, 0, n, m])[np.newaxis] # player x/y, target x/y
+        m = np.random.randint(0, self.grid_size-2, size=1)
+        self.state = np.asarray([q, r, n, m])[np.newaxis] # player x/y, target x/y
 
 
 class ExperienceReplay(object):
@@ -140,16 +137,16 @@ if __name__ == "__main__":
     max_memory = 1500
     hidden_size = 100
     batch_size = 50
-    grid_size = 10
+    grid_size = 21
 
     model = Sequential()
     model.add(Dense(hidden_size, input_shape=(grid_size**2,), activation='relu'))
     model.add(Dense(hidden_size, activation='relu'))
     model.add(Dense(num_actions))
-    model.compile(sgd(lr=.5), "mse")
+    model.compile(sgd(lr=1), "mse")
 
     # If you want to continue training from a previous model, just uncomment the line bellow
-    model.load_weights("model.h5")
+    # model.load_weights("model.h5")
 
     # Define environment/game
     env = Catch(grid_size)
@@ -188,7 +185,7 @@ if __name__ == "__main__":
 
             loss += model.train_on_batch(inputs, targets)
 
-            cv2.imshow('im', cv2.resize(input_t.reshape(10,10)*255, (100,100)))
+            cv2.imshow('im', cv2.resize(input_t.reshape(grid_size,grid_size)*255, (100,100)))
             cv2.waitKey(1)
 
         print(env._try)
