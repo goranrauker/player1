@@ -43,9 +43,15 @@ class Catch(object):
     def _draw_state(self):
         im_size = (self.grid_size,)*2
         state = self.state[0]
-        canvas = np.zeros(im_size)
-        canvas[state[0], state[1]] = 1  # draw player
-        canvas[state[2], state[3]] = 1  # draw target
+        #canvas = np.zeros(im_size)
+        #canvas = np.round(np.random.rand(self.grid_size**2))
+
+        canvas = self.blank_slate.copy()
+        cv2.circle(canvas,(state[0],state[1]),5,1) #player
+        cv2.rectangle(canvas,(state[2]-5,state[3]-5),(state[2]+5,state[3]+5),1)#target
+        #canvas[state[0], state[1]] = 1  # draw player
+        #canvas[state[2], state[3]] = 1  # draw target
+        #print canvas.dtype
         return canvas
 
     def _get_reward(self):
@@ -56,7 +62,7 @@ class Catch(object):
         player_x, player_y, target_x, target_y = self.state[0]
         D = ((player_x-target_x)**2 + (player_y-target_y)**2)**0.5
 
-        return -D/200**0.5
+        return -D/(self.grid_size**2*2)#**.5#200**0.5
 
     def _is_over(self):
         if self._try >= self._max_try:
@@ -85,11 +91,16 @@ class Catch(object):
     def reset(self):
 
         self._try = 0
-        self._max_try = grid_size**2
+        self._max_try = grid_size*4
         q = np.random.randint(0, self.grid_size-1, size=1)
         r = np.random.randint(0, self.grid_size-1, size=1)
         n = np.random.randint(0, self.grid_size-1, size=1)
         m = np.random.randint(0, self.grid_size-2, size=1)
+        im_size = (self.grid_size,)*2
+        self.blank_slate = np.zeros(im_size)
+        idexes = np.random.randint(0,self.grid_size,(100,2))
+        self.blank_slate[idexes]=1
+        #self.blank_slate = np.random.rand(self.grid_size,self.grid_size)/2
         self.state = np.asarray([q, r, n, m])[np.newaxis] # player x/y, target x/y
 
 
@@ -134,10 +145,10 @@ if __name__ == "__main__":
     epsilon = .1  # exploration
     num_actions = 5  # [move_left, move_right, move_up, move_down, stay]
     epoch = 1000
-    max_memory = 1500
+    max_memory = 3000
     hidden_size = 100
     batch_size = 50
-    grid_size = 21
+    grid_size = 100
 
     model = Sequential()
     model.add(Dense(hidden_size, input_shape=(grid_size**2,), activation='relu'))
@@ -185,7 +196,7 @@ if __name__ == "__main__":
 
             loss += model.train_on_batch(inputs, targets)
 
-            cv2.imshow('im', cv2.resize(input_t.reshape(grid_size,grid_size)*255, (100,100)))
+            cv2.imshow('im', cv2.resize(input_t.reshape(grid_size,grid_size), (100,100)))
             cv2.waitKey(1)
 
         print(env._try)
